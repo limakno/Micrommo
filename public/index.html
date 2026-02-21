@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mini MMO</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { background: #222; display: block; }
+    </style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io("http://192.168.1.20:3537"); // <-- TU WPISZ IP SWOJEGO KOMPUTERA
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let players = {};
+let myId = null;
+
+// Odbiór wszystkich graczy
+socket.on('currentPlayers', (serverPlayers) => {
+    players = serverPlayers;
+});
+
+// Zapamiętaj swoje ID
+socket.on('connect', () => {
+    myId = socket.id;
+});
+
+// Odbiór ruchu
+socket.on('playerMoved', (data) => {
+    if (players[data.id]) {
+        players[data.id].x = data.x;
+        players[data.id].y = data.y;
+    }
+});
+
+// Usunięcie gracza
+socket.on('playerLeft', (id) => {
+    delete players[id];
+});
+
+// Sterowanie klawiszami
+document.addEventListener("keydown", (e) => {
+    if (!players[myId]) return;
+
+    let speed = 5;
+
+    if (e.key === "w") players[myId].y -= speed;
+    if (e.key === "s") players[myId].y += speed;
+    if (e.key === "a") players[myId].x -= speed;
+    if (e.key === "d") players[myId].x += speed;
+
+    socket.emit('move', players[myId]);
+});
+
+// Render
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let id in players) {
+        ctx.fillStyle = (id === myId) ? "lime" : "red";
+        ctx.fillRect(players[id].x, players[id].y, 40, 40);
+    }
+
+    requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
