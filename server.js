@@ -1,38 +1,49 @@
+const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 
-const server = http.createServer();
+const app = express();
+const server = http.createServer(app);
 const io = new Server(server, {
-    cors: {
-        origin: "*",  // lokalnie dla testów
-    }
+    cors: { origin: "*" }
 });
 
-let players = {}; // prosta baza graczy w pamięci
+app.use(express.static("public"));
+
+let players = {};
 
 io.on('connection', (socket) => {
-    console.log('Nowy gracz połączony:', socket.id);
+    console.log('Nowy gracz:', socket.id);
 
     // Dodanie gracza
-    players[socket.id] = { x: 0, y: 0 };
+    players[socket.id] = {
+        x: Math.random() * 500,
+        y: Math.random() * 500
+    };
 
-    // Odbiór ruchu gracza
+    // Wyślij wszystkim info o nowym graczu
+    io.emit('currentPlayers', players);
+
     socket.on('move', (data) => {
-        players[socket.id].x = data.x;
-        players[socket.id].y = data.y;
+        if (players[socket.id]) {
+            players[socket.id].x = data.x;
+            players[socket.id].y = data.y;
 
-        // Rozgłaszanie innym graczom
-        socket.broadcast.emit('playerMoved', { id: socket.id, x: data.x, y: data.y });
+            io.emit('playerMoved', {
+                id: socket.id,
+                x: data.x,
+                y: data.y
+            });
+        }
     });
 
-    // Rozłączenie gracza
     socket.on('disconnect', () => {
-        console.log('Gracz rozłączony:', socket.id);
+        console.log('Rozłączono:', socket.id);
         delete players[socket.id];
-        socket.broadcast.emit('playerLeft', socket.id);
+        io.emit('playerLeft', socket.id);
     });
 });
 
-server.listen(3000, () => {
-    console.log('Serwer MMO działa na porcie 3000');
+server.listen(3537, '0.0.0.0', () => {
+    console.log('Serwer działa na porcie 3537');
 });
