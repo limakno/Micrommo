@@ -24,6 +24,12 @@ let players = {};
 let mobs = {};
 let myId = null;
 
+const img = new Image();
+img.src = "/mapa.png"
+img.onload = function() {
+    draw();
+}
+
 // Odbiór wszystkich graczy
 socket.on('currentPlayers', (serverPlayers) => {
     players = serverPlayers;
@@ -68,6 +74,7 @@ document.addEventListener("keydown", (e) => {
 // Render
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0)
 
     for (let id in players) {
         ctx.fillStyle = (id === myId) ? "lime" : "red";
@@ -78,6 +85,8 @@ function draw() {
     ctx.fillStyle = "orange";
     ctx.fillRect(mobs[id].x, mobs[id].y, 8, 8);
 }
+
+
 
     requestAnimationFrame(draw);
 }
