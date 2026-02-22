@@ -12,7 +12,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket = io("http://192.168.1.20:3537"); // <-- TU WPISZ IP SWOJEGO KOMPUTERA
+const socket = io("http://192.168.1.20:3537");
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
@@ -21,6 +21,7 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 let players = {};
+let mobs = {};
 let myId = null;
 
 // Odbiór wszystkich graczy
@@ -31,6 +32,10 @@ socket.on('currentPlayers', (serverPlayers) => {
 // Zapamiętaj swoje ID
 socket.on('connect', () => {
     myId = socket.id;
+});
+
+socket.on("mobsUpdate", (serverMobs) => {
+    mobs = serverMobs;
 });
 
 // Odbiór ruchu
@@ -66,8 +71,13 @@ function draw() {
 
     for (let id in players) {
         ctx.fillStyle = (id === myId) ? "lime" : "red";
-        ctx.fillRect(players[id].x, players[id].y, 40, 40);
+        ctx.fillRect(players[id].x, players[id].y, 4, 4);
     }
+
+    for (let id in mobs) {
+    ctx.fillStyle = "orange";
+    ctx.fillRect(mobs[id].x, mobs[id].y, 8, 8);
+}
 
     requestAnimationFrame(draw);
 }
